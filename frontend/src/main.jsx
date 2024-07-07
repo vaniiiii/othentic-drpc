@@ -7,7 +7,7 @@ import { polygonAmoy, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export const config = createConfig({
-	chains: [polygonAmoy],
+	chains: [polygonAmoy, sepolia],
 	transports: {
 		[polygonAmoy.id]: http(),
 		[sepolia.id]: http(),

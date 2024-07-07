@@ -6,7 +6,7 @@ import { createConfig } from "@wagmi/core";
 import { useSwitchChain } from "wagmi";
 
 export const config = createConfig({
-	chains: [sepolia, polygonAmoy],
+	chains: [polygonAmoy, sepolia],
 	transports: {
 		[polygonAmoy.id]: http(),
 		[sepolia.id]: http(),
@@ -15,18 +15,41 @@ export const config = createConfig({
 
 export const contractAbi = [
 	"function getUsers() view returns (address[] memory)",
-	"function userExists(address) view returns (bool)",
 	"function userScore(address) view returns (int256)",
-	"function users(uint256) view returns (address)",
+	"function userMaxScore(address) external view returns (uint256)",
 ];
-export const contractAddress = "0xe666Bca53207d724D9f214dC792dfa2a873a10b6";
+export const contractAddress = "0x8285Ebcc7247C42C75747152f7ea5aa2C2C348db";
+export const nodeRpcs = [
+	"https://polygon-amoy.g.alchemy.com/v2/ZAb5Lm8DYTZjtnkiJthyYWODWGqATMBM",
+	"https://polygon-amoy.g.alchemy.com/v2/CCNDzP7_HAme-FX8L4fkJFT6WC4R_DWo",
+	"https://polygon-amoy.g.alchemy.com/v2/MRsSLOe2XZZjXGkkEuEvmWFgy7vOZJQx",
+];
+
+const CHAINS = [
+	{
+		title: "Ethereum Mainnet",
+		chainId: 1,
+		currency: "ETH",
+		iconPath: "/ethereum.webp",
+	},
+	{
+		title: "Base",
+		chainId: 8453,
+		currency: "ETH",
+		iconPath: "/base.webp",
+	},
+	{
+		title: "Polygon",
+		chainId: 137,
+		currency: "MATIC",
+		iconPath: "/polygon.webp",
+	},
+];
 
 export const rpc = createPublicClient({
 	chain: polygonAmoy,
 	batch: {
-		multicall: {
-			wait: 500,
-		},
+		multicall: true,
 	},
 	transport: http(),
 });
@@ -55,27 +78,6 @@ function App() {
 		</>
 	);
 }
-
-const CHAINS = [
-	{
-		title: "Ethereum Mainnet",
-		chainId: 1,
-		currency: "ETH",
-		iconPath: "/ethereum.webp",
-	},
-	{
-		title: "Base",
-		chainId: 8453,
-		currency: "ETH",
-		iconPath: "/base.webp",
-	},
-	{
-		title: "Polygon",
-		chainId: 137,
-		currency: "MATIC",
-		iconPath: "/polygon.webp",
-	},
-];
 
 function Homepage() {
 	return (
@@ -113,23 +115,36 @@ function Leaderboard() {
 				client: rpc,
 			});
 			const users = await contract.read.getUsers();
-			const scores = [];
+
+			const scoresPromises = [];
+			const maxScoresPromises = [];
+
 			for (const u of users) {
-				scores.push(await contract.read.userScore([u]));
+				scoresPromises.push(contract.read.userScore([u]));
+				maxScoresPromises.push(contract.read.userMaxScore([u]));
 			}
+
+			const scores = await Promise.all(scoresPromises);
+			const maxScores = await Promise.all(maxScoresPromises);
+
 			const leaderboard = [];
 			for (let i = 0; i < users.length; i++) {
-				leaderboard.push([users[i], parseInt(scores[i].toString())]);
+				const score = parseInt(scores[i].toString());
+				const maxScore = parseFloat(maxScores[i].toString());
+				const pct = parseFloat(((score / maxScore) * 100).toFixed(2));
+				leaderboard.push([users[i], score, maxScore, pct]);
 			}
 			setLeaderboard(leaderboard.sort((a, b) => b[1] - a[1]));
 		}
-
-		fetchContract();
 		let interval = setInterval(() => {
-			// setLeaderboard(leaderboard);
-		}, 1000);
+			fetchContract();
+		}, 10000);
 		return () => clearInterval(interval);
 	}, [rpc]);
+
+	function getRpcUrl(i) {
+		return nodeRpcs[i];
+	}
 
 	return (
 		<div className="w-[1024px] border">
@@ -143,17 +158,50 @@ function Leaderboard() {
 					</tr>
 				</thead>
 				<tbody>
-					{leaderboard.map((l) => {
+					{leaderboard.map((l, i) => {
 						return (
 							<tr key={l[0]}>
 								<td className="py-2 border-b border-black/10 pl-2">
 									{l[0].slice(0, 6).replace("0x", "")}.rpc.node
 								</td>
 								<td className="py-2 border-b border-black/10 font-mono text-sm">
-									{l[0]}
+									{shortenAddress(l[0])}
 								</td>
 								<td className="py-2 border-b border-black/10 text-left">
-									{l[1]?.toString()}
+									<span className="block flex gap-1 items-center">
+										{l[3] > 90 ? (
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 20 20"
+												fill="green"
+												class="w-5 h-5"
+											>
+												<path
+													fill-rule="evenodd"
+													d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+													clip-rule="evenodd"
+												></path>
+											</svg>
+										) : (
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												viewBox="0 0 20 20"
+												fill="red"
+												class="w-5 h-5"
+											>
+												<path
+													fill-rule="evenodd"
+													d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+													clip-rule="evenodd"
+												></path>
+											</svg>
+										)}
+										<span
+											className={l[3] > 90 ? "text-green-500" : "text-red-500"}
+										>
+											{l[3]}
+										</span>
+									</span>
 								</td>
 								<td className="border-b border-black/10 text-right pr-2">
 									<button
@@ -161,9 +209,7 @@ function Leaderboard() {
 											switchChain({
 												chainId: polygonAmoy.id,
 												addEthereumChainParameter: {
-													rpcUrls: [
-														"https://gateway.tenderly.co/public/sepolia",
-													],
+													rpcUrls: [getRpcUrl(i)],
 												},
 											});
 										}}
@@ -184,6 +230,10 @@ function Leaderboard() {
 			)}
 		</div>
 	);
+}
+
+export function shortenAddress(address) {
+	return address ? address.slice(0, 6) + "..." + address.slice(-4) : "";
 }
 
 export default App;
