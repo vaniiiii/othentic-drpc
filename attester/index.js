@@ -100,8 +100,7 @@ provider.on("block", async (blockNumber) => {
         method: "sendTask",
         params: [proofOfTask, data, taskDefinitionId, nodeAccount.address, sig],
       };
-      // The tasks consists of signing the current timestamp. The timestamp
-      // will be used as the seed for our PRNG smart contract
+      
       new ethers.JsonRpcProvider(NODE_RPC).send(
         jsonRpcBody.method,
         jsonRpcBody.params
