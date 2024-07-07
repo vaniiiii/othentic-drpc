@@ -1,6 +1,7 @@
 import express from "express";
 import { ethers } from "ethers";
 import dotenv from "dotenv";
+import pinataSDK from "@pinata/sdk";
 
 dotenv.config();
 
@@ -30,13 +31,29 @@ const attestationCenterContract = new ethers.Contract(
 );
 
 /**
+ * Helper function to publish a JSON object with block.number and block.hash to IPFS
+ */
+async function publishJSONToIpfs(data) {
+  var proofOfTask = "";
+  try {
+    const pinata = new pinataSDK(pinataApiKey, pinataSecretApiKey);
+    const response = await pinata.pinJSONToIPFS(data);
+    proofOfTask = response.IpfsHash;
+    console.log(`proofOfTask: ${proofOfTask}`);
+  } catch (error) {
+    console.error("Error making API request to pinataSDK:", error);
+  }
+  return proofOfTask;
+}
+
+/**
  * Find the elected task performer for a certain block
  */
 async function electedLeader(blockNumber) {
   const count = await attestationCenterContract.numOfOperators({
     blockTag: blockNumber,
   });
-  const selectedOperatorId = (BigInt(blockNumber)/20n % count) + 1n;
+  const selectedOperatorId = ((BigInt(blockNumber) / 20n) % count) + 1n;
   const paymentDetails =
     await attestationCenterContract.getOperatorPaymentDetail(
       selectedOperatorId,
@@ -62,9 +79,13 @@ provider.on("block", async (blockNumber) => {
     // If the current performer is the operator itself, it performs the task
     if (currentPerformer === nodeAccount.address) {
       console.log(`Performing task for block ${blockNumber}...`);
-      const proofOfTask = `${blockNumber}+${Date.now()}`;
+      const block = await provider.getBlock(blockNumber);
+      const proofOfTask = JSON.stringify({
+        blockNumber: blockNumber,
+        blockHash: block.hash,
+      });
       const taskDefinitionId = 0;
-      const data = ethers.hexlify(ethers.toUtf8Bytes("hello world"));
+      const data = ethers.hexlify(ethers.toUtf8Bytes(`Send task for block ${blockNumber}`));
       const message = ethers.AbiCoder.defaultAbiCoder().encode(
         ["string", "bytes", "address", "uint16"],
         [proofOfTask, data, nodeAccount.address, taskDefinitionId]
@@ -97,21 +118,61 @@ provider.on("block", async (blockNumber) => {
  */
 app.post("/task/validate", async (req, res) => {
   const { proofOfTask, performer } = req.body;
-  const blockNumber = parseInt(proofOfTask.split("+")[0], 10); // Extract the block number from the proof of task
-  const electedPerformer = await electedLeader(blockNumber); // Get the elected performer for that block
+  const { blockNumber: taskBlockNumber, blockHash: taskHash } = JSON.parse(proofOfTask);
 
-  console.log(
-    `Validating task for block number: ${blockNumber}, Task Performer: ${performer}, Elected Performer: ${electedPerformer}`
-  );
+  try {
+    const electedPerformer = await electedLeader(taskBlockNumber); // Get the elected performer for that block
+    const block = await provider.getBlock(taskBlockNumber);
+    
+    const currentBlockNumber = await provider.getBlockNumber();
 
-  let isValid = performer === electedPerformer; // Verify the performer is the elected performer
-  res.status(200);
-  res.json({
-    data: isValid,
-    error: false,
-    message: "Success",
-  });
+    // Gather validation results
+    const isBlockHashValid = block.hash === taskHash;
+    const isBlockRecent = currentBlockNumber - taskBlockNumber <= 10;
+    const isPerformerCorrect = electedPerformer === performer;
+
+    // Determine response based on validation results
+    if (!isBlockHashValid) {
+      return res.status(400).json({
+        data: false,
+        error: true,
+        message: "Block hash does not match",
+      });
+    }
+
+    if (!isBlockRecent) {
+      return res.status(400).json({
+        data: false,
+        error: true,
+        message: "Block is older than 10 blocks",
+      });
+    }
+
+    if (!isPerformerCorrect) {
+      return res.status(400).json({
+        data: false,
+        error: true,
+        message: "Performer is incorrect",
+      });
+    }
+
+    // If all validations pass
+    return res.status(200).json({
+      data: true,
+      error: false,
+      message: "Performer is correct",
+    });
+
+  } catch (error) {
+    console.error("Error validating task:", error);
+    return res.status(500).json({
+      data: false,
+      error: true,
+      message: "Internal server error",
+    });
+  }
 });
+
 
 app.listen(port, () => {
   console.log(`AVS Implementation listening on localhost:${port}`);
