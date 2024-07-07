@@ -19,7 +19,10 @@ function App() {
   return (
     <div className="flex items-center justify-center h-screen flex-col mt-[-100px]">
       <div className="w-[800px] mb-4">
-        <h2 className="font-bold text-2xl">Othentic dRPC</h2>
+        <h2 className="font-bold text-2xl flex items-center gap-2">
+          <span><img className="h-6" src="/image.avif" alt="" /></span>
+          <span>Othentic dRPC</span>
+        </h2>
         <p className="opacity-80 opacity-40">Powered by EigenLayer and the Othentic Stack</p>
       </div>
       <div className="w-[800px] border">
