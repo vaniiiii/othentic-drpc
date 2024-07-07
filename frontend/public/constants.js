@@ -1,7 +1,12 @@
 export const contractAbi = [
   "function getUsers() view returns (address[] memory)",
-  "function userExists(address) view returns (bool)",
   "function userScore(address) view returns (int256)",
-  "function users(uint256) view returns (address)",
+  "function userMaxScore(address) external view returns (uint256)",
 ];
-export const contractAddress = "0xe666Bca53207d724D9f214dC792dfa2a873a10b6"
+export const contractAddress = "0x8285Ebcc7247C42C75747152f7ea5aa2C2C348db";
+
+export const nodeRpcs = [
+  "https://polygon-amoy.g.alchemy.com/v2/ZAb5Lm8DYTZjtnkiJthyYWODWGqATMBM",
+  "https://polygon-amoy.g.alchemy.com/v2/CCNDzP7_HAme-FX8L4fkJFT6WC4R_DWo",
+  "https://polygon-amoy.g.alchemy.com/v2/MRsSLOe2XZZjXGkkEuEvmWFgy7vOZJQx",
+];
