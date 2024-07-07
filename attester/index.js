@@ -30,6 +30,21 @@ const attestationCenterContract = new ethers.Contract(
   provider
 );
 
+// DEMO PURPOSES ONLY
+
+// Simulate node failure probabilities for demo purposes
+const failureRates = {
+  "0": 0.01, // 1% failure rate
+  "1": 0.2, // 20% failure rate
+  "2": 0.45, // 45% failure rate
+};
+
+// Function to determine if a node should fail
+function shouldFail(nodeAddress) {
+  const failureRate = failureRates[nodeAddress];
+  return Math.random() < failureRate;
+}
+
 /**
  * Helper function to publish a JSON object with block.number and block.hash to IPFS
  */
@@ -59,7 +74,7 @@ async function electedLeader(blockNumber) {
       selectedOperatorId,
       { blockTag: blockNumber }
     );
-  return paymentDetails[0];
+  return [paymentDetails[0], selectedOperatorId];
 }
 
 /**
@@ -74,18 +89,29 @@ async function electedLeader(blockNumber) {
 provider.on("block", async (blockNumber) => {
   if (blockNumber % 10 == 0) {
     // Every operator knows who is supposed to send a task in the next block
-    const currentPerformer = await electedLeader(blockNumber);
+    const [currentPerformer, selectedOperatorId] =
+      await electedLeader(blockNumber);
 
     // If the current performer is the operator itself, it performs the task
     if (currentPerformer === nodeAccount.address) {
       console.log(`Performing task for block ${blockNumber}...`);
-      const block = await provider.getBlock(blockNumber);
+
+      let block;
+      if (shouldFail(selectedOperatorId)) {
+        console.log(`Node ${nodeAccount.address} is simulating failure...`);
+        block = await provider.getBlock(blockNumber - 11);
+      } else {
+        block = await provider.getBlock(blockNumber);
+      }
+
       const proofOfTask = JSON.stringify({
         blockNumber: blockNumber,
         blockHash: block.hash,
       });
       const taskDefinitionId = 0;
-      const data = ethers.hexlify(ethers.toUtf8Bytes(`Send task for block ${blockNumber}`));
+      const data = ethers.hexlify(
+        ethers.toUtf8Bytes(`Send task for block ${blockNumber}`)
+      );
       const message = ethers.AbiCoder.defaultAbiCoder().encode(
         ["string", "bytes", "address", "uint16"],
         [proofOfTask, data, nodeAccount.address, taskDefinitionId]
@@ -100,7 +126,7 @@ provider.on("block", async (blockNumber) => {
         method: "sendTask",
         params: [proofOfTask, data, taskDefinitionId, nodeAccount.address, sig],
       };
-      
+
       new ethers.JsonRpcProvider(NODE_RPC).send(
         jsonRpcBody.method,
         jsonRpcBody.params
@@ -117,12 +143,13 @@ provider.on("block", async (blockNumber) => {
  */
 app.post("/task/validate", async (req, res) => {
   const { proofOfTask, performer } = req.body;
-  const { blockNumber: taskBlockNumber, blockHash: taskHash } = JSON.parse(proofOfTask);
+  const { blockNumber: taskBlockNumber, blockHash: taskHash } =
+    JSON.parse(proofOfTask);
 
   try {
-    const electedPerformer = await electedLeader(taskBlockNumber); // Get the elected performer for that block
+    const [electedPerformer] = await electedLeader(taskBlockNumber); // Get the elected performer for that block
     const block = await provider.getBlock(taskBlockNumber);
-    
+
     const currentBlockNumber = await provider.getBlockNumber();
 
     // Gather validation results
@@ -131,37 +158,20 @@ app.post("/task/validate", async (req, res) => {
     const isPerformerCorrect = electedPerformer === performer;
 
     // Determine response based on validation results
-    if (!isBlockHashValid) {
-      return res.status(400).json({
+    if(!isBlockHashValid || !isBlockRecent || !isPerformerCorrect) {
+      return res.status(200).json({
         data: false,
-        error: true,
-        message: "Block hash does not match",
-      });
-    }
-
-    if (!isBlockRecent) {
-      return res.status(400).json({
-        data: false,
-        error: true,
-        message: "Block is older than 10 blocks",
-      });
-    }
-
-    if (!isPerformerCorrect) {
-      return res.status(400).json({
-        data: false,
-        error: true,
+        error: false,
         message: "Performer is incorrect",
       });
     }
-
-    // If all validations pass
-    return res.status(200).json({
-      data: true,
-      error: false,
-      message: "Performer is correct",
-    });
-
+    else {
+      return res.status(200).json({
+        data: true,
+        error: false,
+        message: "Performer is correct",
+      });
+    }
   } catch (error) {
     console.error("Error validating task:", error);
     return res.status(500).json({
@@ -171,7 +181,6 @@ app.post("/task/validate", async (req, res) => {
     });
   }
 });
-
 
 app.listen(port, () => {
   console.log(`AVS Implementation listening on localhost:${port}`);
