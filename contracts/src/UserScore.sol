@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.20;
-import "./IAttestationCenter.sol";
+
 /*______     __      __                              __      __ 
  /      \   /  |    /  |                            /  |    /  |
 /$$$$$$  | _$$ |_   $$ |____    ______   _______   _$$ |_   $$/   _______ 
@@ -15,14 +15,40 @@ $$    $$/   $$  $$/ $$ |  $$ |$$       |$$ |  $$ |  $$  $$/ $$ |$$       |
  * @author Othentic Labs LTD.
  * @notice Terms of Service: https://www.othentic.xyz/terms-of-service
  */
-interface IAvsLogic {
+
+import "./IAvsLogic.sol";
+
+contract UserScore is IAvsLogic {
+    mapping(address => int256) public userScore;
+    mapping(address => bool) public userExists;
+
+    address[] public users;
+
+    address public attestationCenter;
+
+    constructor(address _attestationCenter) {
+        attestationCenter = _attestationCenter;
+    }
+
     function afterTaskSubmission(
         IAttestationCenter.TaskInfo calldata _taskInfo,
         bool _isApproved,
         bytes calldata _tpSignature,
         uint256[2] calldata _taSignature,
         uint256[] calldata _operatorIds
-    ) external;
+    ) external {
+        // require(msg.sender == attestationCenter, "Not allowed");
+        address _performerAddr = _taskInfo.taskPerformer;
+        if (!userExists[_performerAddr]) {
+            users.push(_performerAddr);
+            userExists[_performerAddr] = true;
+        }
+        if (_isApproved) {
+            userScore[_performerAddr] += 1;
+        } else {
+            userScore[_performerAddr] -= 1;
+        }
+    }
 
     function beforeTaskSubmission(
         IAttestationCenter.TaskInfo calldata _taskInfo,
@@ -30,5 +56,11 @@ interface IAvsLogic {
         bytes calldata _tpSignature,
         uint256[2] calldata _taSignature,
         uint256[] calldata _operatorIds
-    ) external;
+    ) external {
+        // No implementation
+    }
+
+    function getUsers() external view returns (address[] memory) {
+        return users;
+    }
 }

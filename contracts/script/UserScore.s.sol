@@ -18,19 +18,19 @@ $$    $$/   $$  $$/ $$ |  $$ |$$       |$$ |  $$ |  $$  $$/ $$ |$$       |
 
 import {Script, console} from "forge-std/Script.sol";
 import '../src/IAttestationCenter.sol';
-import '../src/PRNG.sol';
+import '../src/UserScore.sol';
 
 // How to:
 // Either `source ../../.env` or replace variables in command.
-// forge script PRNGDeploy --rpc-url $L2_RPC --private-key $PRIVATE_KEY
-// --broadcast -vvvv --verify --etherscan-api-key $L2_ETHERSCAN_API_KEY --chain
-// $L2_CHAIN --verifier-url $L2_VERIFIER_URL --sig="run(address)" $ATTESTATION_CENTER_ADDRESS
-contract PRNGDeploy is Script {
+// forge script PRNGDeploy --rpc-url https://polygon-amoy.g.alchemy.com/v2/ZAb5Lm8DYTZjtnkiJthyYWODWGqATMBM --private-key 8383781b9e089b5c3a37f9b94dc5ace9d326e421017a5e524800558eb447bb48
+// --broadcast -vvvv --verify --etherscan-api-key NE4PBPDBHKGXX9FXGRXQBCZ8HD7HCCVU8E --chain
+// 80002 --verifier-url https://api-amoy.polygonscan.com/api/
+contract UserScoreDeploy is Script {
     function setUp() public {}
 
-    function run(address attestationCenter) public {
+    function run() public {
         vm.startBroadcast();
-        PRNG prng = new PRNG(attestationCenter);
-        IAttestationCenter(attestationCenter).setAvsLogic(address(prng));
+        UserScore userScore = new UserScore(0x40799efa4706292536654badB132ED613AC1B1CC);
+        IAttestationCenter(0x40799efa4706292536654badB132ED613AC1B1CC).setAvsLogic(address(userScore));
     }
 }

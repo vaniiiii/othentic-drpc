@@ -14,7 +14,7 @@ const port = 4002;
 app.use(express.json());
 
 // L2 RPC provider
-const rpcUrl = process.env.L2_RPC;
+const rpcUrl = process.env.L2_RPC_ATTESTER;
 
 const provider = new ethers.JsonRpcProvider(rpcUrl);
 
@@ -53,7 +53,7 @@ async function electedLeader(blockNumber) {
   const count = await attestationCenterContract.numOfOperators({
     blockTag: blockNumber,
   });
-  const selectedOperatorId = ((BigInt(blockNumber) / 20n) % count) + 1n;
+  const selectedOperatorId = ((BigInt(blockNumber) / 10n) % count) + 1n;
   const paymentDetails =
     await attestationCenterContract.getOperatorPaymentDetail(
       selectedOperatorId,
@@ -72,7 +72,7 @@ async function electedLeader(blockNumber) {
  * the range [1..count], which we use as the ID of the chosen performer.
  */
 provider.on("block", async (blockNumber) => {
-  if (blockNumber % 20 == 0) {
+  if (blockNumber % 10 == 0) {
     // Every operator knows who is supposed to send a task in the next block
     const currentPerformer = await electedLeader(blockNumber);
 
