@@ -8,7 +8,9 @@ import { useSwitchChain } from "wagmi";
 export const config = createConfig({
 	chains: [polygonAmoy, sepolia],
 	transports: {
-		[polygonAmoy.id]: http(),
+		[polygonAmoy.id]: http(
+			"https://polygon-amoy.g.alchemy.com/v2/ZAb5Lm8DYTZjtnkiJthyYWODWGqATMBM",
+		),
 		[sepolia.id]: http(),
 	},
 });
@@ -174,7 +176,7 @@ function Leaderboard() {
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 20 20"
 												fill="green"
-												class="w-5 h-5"
+												className="w-5 h-5"
 											>
 												<path
 													fill-rule="evenodd"
@@ -187,7 +189,7 @@ function Leaderboard() {
 												xmlns="http://www.w3.org/2000/svg"
 												viewBox="0 0 20 20"
 												fill="red"
-												class="w-5 h-5"
+												className="w-5 h-5"
 											>
 												<path
 													fill-rule="evenodd"
