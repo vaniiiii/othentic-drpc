@@ -132,7 +132,7 @@ function Homepage() {
 					<div className="flex flex-col items-center justify-center gap-2 mt-[-100px]">
 						<img className="w-[400px]" src="/Eigenlayer.webp" alt="" />
 						<h1 className="font-bold text-4xl text-[#1c0b73]">eigenRPC</h1>
-						<div className="w-[60%] text-center w-full flex flex-col gap-2">
+						<div className="w-[60%] text-center flex flex-col gap-2">
 							<p>
 								eigenRPC is an AVS that enables the creation and coordination of
 								a decentralized, secure, and reliable RPC network for any EVM
