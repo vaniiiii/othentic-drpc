@@ -57,6 +57,48 @@ export const rpc = createPublicClient({
 });
 
 function App() {
+	const [leaderboard, setLeaderboard] = React.useState([]);
+
+	// Fetch data onchain so by the time the user gets to the leaderboard,
+	// it's already fetched. Amoy network is quite slow so ideally this code should
+	// be in the leaderboard component.
+	React.useEffect(() => {
+		async function fetchContract() {
+			const contract = getContract({
+				address: contractAddress,
+				abi: parseAbi(contractAbi),
+				client: rpc,
+			});
+			const users = await contract.read.getUsers();
+			const scoresPromises = [];
+			const maxScoresPromises = [];
+			for (const u of users) {
+				scoresPromises.push(contract.read.userScore([u]));
+				maxScoresPromises.push(contract.read.userMaxScore([u]));
+			}
+			const scores = await Promise.all(scoresPromises);
+			const maxScores = await Promise.all(maxScoresPromises);
+			const blockNumber = await rpc.getBlockNumber();
+			const h = parseInt(blockNumber.toString());
+			const leaderboard = [];
+			for (let i = 0; i < users.length; i++) {
+				const score = parseInt(scores[i].toString());
+				const maxScore = parseFloat(maxScores[i].toString());
+				const pct = parseFloat(((score / maxScore) * 100).toFixed(2));
+				// Latency and other info can be fetched but in the
+				// the interest of time, we'll just show random values
+				const latency = Math.random() * 100;
+				const newH = pct <= 90 ? h - Math.round(Math.random() * 100) : h;
+				leaderboard.push([users[i], score, maxScore, pct, latency, newH]);
+			}
+			setLeaderboard(leaderboard.sort((a, b) => b[1] - a[1]));
+		}
+		let interval = setInterval(() => {
+			fetchContract();
+		}, 1500);
+		return () => clearInterval(interval);
+	}, [rpc]);
+
 	return (
 		<>
 			<div className="flex items-center justify-center h-screen flex-col mt-[-100px]">
@@ -74,7 +116,9 @@ function App() {
 
 				<Switch>
 					<Route path="/" component={Homepage} />
-					<Route path="/leaderboard" component={Leaderboard} />
+					<Route path="/leaderboard">
+						<Leaderboard leaderboard={leaderboard} />
+					</Route>
 				</Switch>
 			</div>
 		</>
@@ -104,52 +148,16 @@ function Homepage() {
 	);
 }
 
-function Leaderboard() {
+function Leaderboard({ leaderboard }) {
 	const { switchChain } = useSwitchChain();
+	const [loading, setLoading] = React.useState(true);
 
-	const [leaderboard, setLeaderboard] = React.useState([]);
-
+	// Simulate loading. Leaderboard info is fetched in the root component.
 	React.useEffect(() => {
-		async function fetchContract() {
-			const contract = getContract({
-				address: contractAddress,
-				abi: parseAbi(contractAbi),
-				client: rpc,
-			});
-			const users = await contract.read.getUsers();
-
-			const scoresPromises = [];
-			const maxScoresPromises = [];
-
-			for (const u of users) {
-				scoresPromises.push(contract.read.userScore([u]));
-				maxScoresPromises.push(contract.read.userMaxScore([u]));
-			}
-
-			const scores = await Promise.all(scoresPromises);
-			const maxScores = await Promise.all(maxScoresPromises);
-
-			const leaderboard = [];
-			for (let i = 0; i < users.length; i++) {
-				const score = parseInt(scores[i].toString());
-				const maxScore = parseFloat(maxScores[i].toString());
-				const pct = parseFloat(((score / maxScore) * 100).toFixed(2));
-        // latency and other info can be fetched but in the
-        // the interest of time, we'll just show random values
-        const latency = Math.random() * 100
-				leaderboard.push([users[i], score, maxScore, pct, latency]);
-			}
-			setLeaderboard(leaderboard.sort((a, b) => b[1] - a[1]));
-		}
-		let interval = setInterval(() => {
-			fetchContract();
-		}, 10000);
-		return () => clearInterval(interval);
-	}, [rpc]);
-
-	function getRpcUrl(i) {
-		return nodeRpcs[i];
-	}
+		setTimeout(() => {
+			setLoading(false);
+		}, 1000);
+	}, []);
 
 	return (
 		<div className="w-[1024px] border">
@@ -159,6 +167,7 @@ function Leaderboard() {
 						<th className="text-left pl-2 bg-gray-100/50 py-2">RPC</th>
 						<th className="text-left bg-gray-100/50 py-2">Address</th>
 						<th className="text-left bg-gray-100/50 py-2 text-left">Latency</th>
+						<th className="text-left bg-gray-100/50 py-2 text-left">Height</th>
 						<th className="text-left bg-gray-100/50 py-2 text-left">Score</th>
 						<th className="text-left bg-gray-100/50"></th>
 					</tr>
@@ -173,7 +182,12 @@ function Leaderboard() {
 								<td className="py-2 border-b border-black/10 font-mono text-sm">
 									{shortenAddress(l[0])}
 								</td>
-                <td className="py-2 border-b border-black/10 font-mono text-sm">{l[4]?.toFixed(4)} ms</td>
+								<td className="py-2 border-b border-black/10 font-mono text-sm">
+									{l[4]?.toFixed(4)} ms
+								</td>
+								<td className="py-2 border-b border-black/10 font-mono text-sm">
+									{l[5]}
+								</td>
 								<td className="py-2 border-b border-black/10 text-left">
 									<span className="block flex gap-1 items-center">
 										{l[3] > 90 ? (
@@ -230,8 +244,28 @@ function Leaderboard() {
 					})}
 				</tbody>
 			</table>
-			{leaderboard.length === 0 && (
+			{loading && (
 				<div className="bg-gray-100/20 p-4 flex items-center justify-center">
+					<svg
+						className="animate-spin -ml-1 mr-3 h-5 w-5 text-green-500"
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+					>
+						<circle
+							className="opacity-25"
+							cx="12"
+							cy="12"
+							r="10"
+							stroke="currentColor"
+							stroke-width="4"
+						></circle>
+						<path
+							className="opacity-75"
+							fill="currentColor"
+							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+						></path>
+					</svg>
 					<span>Loading...</span>
 				</div>
 			)}
@@ -241,6 +275,10 @@ function Leaderboard() {
 
 export function shortenAddress(address) {
 	return address ? address.slice(0, 6) + "..." + address.slice(-4) : "";
+}
+
+function getRpcUrl(i) {
+	return nodeRpcs[i];
 }
 
 export default App;
