@@ -101,49 +101,76 @@ function App() {
 
 	return (
 		<>
-			<div className="flex items-center justify-center h-screen flex-col mt-[-100px]">
-				<div className="w-[1024px] mb-4">
-					<h2 className="font-bold text-2xl flex items-center gap-2">
-						<span>
-							<img className="h-6" src="/image.avif" alt="" />
-						</span>
-						<span>Othentic dRPC</span>
-					</h2>
-					<p className="opacity-80 opacity-40">
-						Powered by EigenLayer and the Othentic Stack
-					</p>
-				</div>
-
-				<Switch>
-					<Route path="/" component={Homepage} />
-					<Route path="/leaderboard">
+			<Switch>
+				<Route path="/" component={Homepage} />
+				<Route path="/leaderboard">
+					<div className="flex items-center justify-center h-screen flex-col mt-[-100px]">
+						<div className="w-[1024px] mb-4">
+							<h2 className="font-bold text-2xl flex items-center gap-2">
+								<span>
+									<img className="h-10" src="/Eigenlayer.webp" alt="" />
+								</span>
+								<span>eigenRPC</span>
+							</h2>
+							<p className="opacity-80 opacity-40">
+								Powered by EigenLayer and the Othentic Stack
+							</p>
+						</div>
 						<Leaderboard leaderboard={leaderboard} />
-					</Route>
-				</Switch>
-			</div>
+					</div>
+				</Route>
+			</Switch>
 		</>
 	);
 }
 
 function Homepage() {
 	return (
-		<div className="grid grid-cols-3 gap-4 w-[1024px]">
-			{CHAINS.map((d) => (
-				<div className="p-4 flex flex-col border border-gray-100 bg-white items-center gap-2 rounded-lg">
-					<img className="h-6 rounded-full" src={d.iconPath} alt="" />
-					<h2 className="text-xl font-bold text-center">{d.title}</h2>
-					<span>
-						{d.chainId} <span className="opacity-20 font-mono">/</span>{" "}
-						{d.currency}
-					</span>
-					<Link
-						className="border-black border hover:text-white text-black text-center py-2 w-full rounded-full hover:bg-blue-500"
-						to="/leaderboard"
-					>
-						Select
-					</Link>
+		<div className="grid grid-cols-2 h-screen">
+			<div className="bg-[#e2dcff] flex flex-col items-center justify-center">
+				<div className="">
+					<div className="flex flex-col items-center justify-center gap-2 mt-[-100px]">
+						<img className="w-[400px]" src="/Eigenlayer.webp" alt="" />
+						<h1 className="font-bold text-4xl text-[#1c0b73]">eigenRPC</h1>
+						<div className="w-[60%] text-center w-full flex flex-col gap-2">
+							<p>
+								eigenRPC is an AVS that enables the creation and coordination of
+								a decentralized, secure, and reliable RPC network for any EVM
+								chain.
+							</p>
+							<p>
+								eigenRPC operators work together to ensure the integrity of the
+								network, and operator reputation scores ensure users can access
+								the most trustworthy nodes.
+							</p>
+						</div>
+					</div>
 				</div>
-			))}
+			</div>
+			<div className="w-full p-6 h-full">
+				<div className="mb-6">
+					<h2 className="font-bold text-lg -mb-1">Networks</h2>
+					<span className="opacity-40">Select a network</span>
+				</div>
+				<div className="grid grid-cols-1 gap-4">
+					{CHAINS.map((d) => (
+						<div className="p-4 flex flex-col border border-gray-100 bg-white items-center gap-2 rounded-lg">
+							<img className="h-6 rounded-full" src={d.iconPath} alt="" />
+							<h2 className="text-xl font-bold text-center">{d.title}</h2>
+							<span>
+								{d.chainId} <span className="opacity-20 font-mono">/</span>{" "}
+								{d.currency}
+							</span>
+							<Link
+								className="border-black border hover:text-white text-black text-center py-2 w-[50%] rounded-full hover:bg-blue-500"
+								to="/leaderboard"
+							>
+								Select
+							</Link>
+						</div>
+					))}
+				</div>
+			</div>
 		</div>
 	);
 }
