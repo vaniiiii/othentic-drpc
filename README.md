@@ -1,8 +1,8 @@
-# 🔐 Othentic dRPC
+# 🔐 eigenRPC
 
 ## Introduction 🌐
 
-Welcome to the Othentic dRPC project! This project leverages the power of Eigen Layer and Othentic Stack to create a robust and secure decentralized RPC network. By decentralizing the RPC, we help decentralize the blockchain space and provide a reliable connection to blockchain data, ensuring enhanced security, reliability, and trust in the network. 🌟
+Welcome to the eigenRPC project! This project leverages the power of Eigen Layer and Othentic Stack to create a robust and secure decentralized RPC network. By decentralizing the RPC, we help decentralize the blockchain space and provide a reliable connection to blockchain data, ensuring enhanced security, reliability, and trust in the network. 🌟
 
 ## How It Works 🔍
 
