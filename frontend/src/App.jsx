@@ -200,78 +200,82 @@ function Leaderboard({ leaderboard }) {
 					</tr>
 				</thead>
 				<tbody>
-					{leaderboard.map((l, i) => {
-						return (
-							<tr key={l[0]}>
-								<td className="py-2 border-b border-black/10 pl-2">
-									{l[0].slice(0, 6).replace("0x", "")}.rpc.node
-								</td>
-								<td className="py-2 border-b border-black/10 font-mono text-sm">
-									{shortenAddress(l[0])}
-								</td>
-								<td className="py-2 border-b border-black/10 font-mono text-sm">
-									{l[4]?.toFixed(4)} ms
-								</td>
-								<td className="py-2 border-b border-black/10 font-mono text-sm">
-									{l[5]}
-								</td>
-								<td className="py-2 border-b border-black/10 text-left">
-									<span className="block flex gap-1 items-center">
-										{l[3] > 90 ? (
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												viewBox="0 0 20 20"
-												fill="green"
-												className="w-5 h-5"
+					{!loading &&
+						leaderboard.length > 0 &&
+						leaderboard.map((l, i) => {
+							return (
+								<tr key={l[0]}>
+									<td className="py-2 border-b border-black/10 pl-2">
+										{l[0].slice(0, 6).replace("0x", "")}.rpc.node
+									</td>
+									<td className="py-2 border-b border-black/10 font-mono text-sm">
+										{shortenAddress(l[0])}
+									</td>
+									<td className="py-2 border-b border-black/10 font-mono text-sm">
+										{l[4]?.toFixed(4)} ms
+									</td>
+									<td className="py-2 border-b border-black/10 font-mono text-sm">
+										{l[5]}
+									</td>
+									<td className="py-2 border-b border-black/10 text-left">
+										<span className="block flex gap-1 items-center">
+											{l[3] > 90 ? (
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													viewBox="0 0 20 20"
+													fill="green"
+													className="w-5 h-5"
+												>
+													<path
+														fill-rule="evenodd"
+														d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+														clip-rule="evenodd"
+													></path>
+												</svg>
+											) : (
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													viewBox="0 0 20 20"
+													fill="red"
+													className="w-5 h-5"
+												>
+													<path
+														fill-rule="evenodd"
+														d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+														clip-rule="evenodd"
+													></path>
+												</svg>
+											)}
+											<span
+												className={
+													l[3] > 90 ? "text-green-500" : "text-red-500"
+												}
 											>
-												<path
-													fill-rule="evenodd"
-													d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-													clip-rule="evenodd"
-												></path>
-											</svg>
-										) : (
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												viewBox="0 0 20 20"
-												fill="red"
-												className="w-5 h-5"
-											>
-												<path
-													fill-rule="evenodd"
-													d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-													clip-rule="evenodd"
-												></path>
-											</svg>
-										)}
-										<span
-											className={l[3] > 90 ? "text-green-500" : "text-red-500"}
-										>
-											{l[3]}
+												{l[3]}
+											</span>
 										</span>
-									</span>
-								</td>
-								<td className="border-b border-black/10 text-right pr-2">
-									<button
-										onClick={() => {
-											switchChain({
-												chainId: polygonAmoy.id,
-												addEthereumChainParameter: {
-													rpcUrls: [getRpcUrl(i)],
-												},
-											});
-										}}
-										className="border-black border hover:text-white text-black text-center rounded-full hover:bg-blue-500 px-2 py-1"
-									>
-										Add to Metamask
-									</button>
-								</td>
-							</tr>
-						);
-					})}
+									</td>
+									<td className="border-b border-black/10 text-right pr-2">
+										<button
+											onClick={() => {
+												switchChain({
+													chainId: polygonAmoy.id,
+													addEthereumChainParameter: {
+														rpcUrls: [getRpcUrl(i)],
+													},
+												});
+											}}
+											className="border-black border hover:text-white text-black text-center rounded-full hover:bg-blue-500 px-2 py-1"
+										>
+											Add to Metamask
+										</button>
+									</td>
+								</tr>
+							);
+						})}
 				</tbody>
 			</table>
-			{loading && (
+			{(loading || leaderboard.length === 0) && (
 				<div className="bg-gray-100/20 p-4 flex items-center justify-center">
 					<svg
 						className="animate-spin -ml-1 mr-3 h-5 w-5 text-green-500"
