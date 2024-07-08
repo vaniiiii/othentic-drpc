@@ -88,7 +88,7 @@ function App() {
 				// Latency and other info can be fetched but in the
 				// the interest of time, we'll just show random values
 				const latency = Math.random() * 100;
-				const newH = pct <= 90 ? h - Math.round(Math.random() * 100) : h;
+				const newH = pct <= 90 ? h - 4 : h;
 				leaderboard.push([users[i], score, maxScore, pct, latency, newH]);
 			}
 			setLeaderboard(leaderboard.sort((a, b) => b[1] - a[1]));
