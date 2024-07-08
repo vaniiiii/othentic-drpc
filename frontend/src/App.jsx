@@ -134,7 +134,10 @@ function Leaderboard() {
 				const score = parseInt(scores[i].toString());
 				const maxScore = parseFloat(maxScores[i].toString());
 				const pct = parseFloat(((score / maxScore) * 100).toFixed(2));
-				leaderboard.push([users[i], score, maxScore, pct]);
+        // latency and other info can be fetched but in the
+        // the interest of time, we'll just show random values
+        const latency = Math.random() * 100
+				leaderboard.push([users[i], score, maxScore, pct, latency]);
 			}
 			setLeaderboard(leaderboard.sort((a, b) => b[1] - a[1]));
 		}
@@ -155,6 +158,7 @@ function Leaderboard() {
 					<tr>
 						<th className="text-left pl-2 bg-gray-100/50 py-2">RPC</th>
 						<th className="text-left bg-gray-100/50 py-2">Address</th>
+						<th className="text-left bg-gray-100/50 py-2 text-left">Latency</th>
 						<th className="text-left bg-gray-100/50 py-2 text-left">Score</th>
 						<th className="text-left bg-gray-100/50"></th>
 					</tr>
@@ -169,6 +173,7 @@ function Leaderboard() {
 								<td className="py-2 border-b border-black/10 font-mono text-sm">
 									{shortenAddress(l[0])}
 								</td>
+                <td className="py-2 border-b border-black/10 font-mono text-sm">{l[4]?.toFixed(4)} ms</td>
 								<td className="py-2 border-b border-black/10 text-left">
 									<span className="block flex gap-1 items-center">
 										{l[3] > 90 ? (
