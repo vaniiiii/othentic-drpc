@@ -89,13 +89,11 @@ cd nextjs
 npm install
 ```
 
-2. Run NextJS App
+2. Run App
 
 ```bash
-npx next dev
+npx run dev
 ```
-
-Visit http://localhost:3000 to view the app. On the `Homepage`, you can perform searches, and on the `Vaults` page, you can check position metrics.
 
 ### Setting Up Smart Contracts
 
